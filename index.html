@@ -208,6 +208,11 @@ function App() {
     setMaterias((prev) => [...prev, { ...m, id: "mp" + (prev.length + 1) }]);
   }
 
+  function eliminarMateria(id) {
+    if (!window.confirm("¿Eliminar esta materia prima? También se quitará de las recetas que la usen.")) return;
+    setMaterias((prev) => prev.filter((m) => m.id !== id));
+  }
+
   function agregarProducto(p) {
     setProductos((prev) => [...prev, { ...p, id: "pt" + Date.now() }]);
   }
@@ -281,7 +286,7 @@ function App() {
             stockBajo={stockBajo} porCaducar={porCaducar} setTab={setTab} />
         )}
         {tab === "materias" && (
-          <MateriasPrimas materias={materias} onNueva={() => setModalMateria(true)} />
+          <MateriasPrimas materias={materias} onNueva={() => setModalMateria(true)} onEliminar={eliminarMateria} />
         )}
         {tab === "productos" && (
           <Productos
@@ -430,7 +435,7 @@ function Metric({ label, value, icon, tone }) {
   );
 }
 
-function MateriasPrimas({ materias, onNueva }) {
+function MateriasPrimas({ materias, onNueva, onEliminar }) {
   const [filtro, setFiltro] = useState("todos");
   const filtradas = materias.filter((m) => filtro === "todos" || m.tipo === filtro);
   return (
@@ -463,6 +468,7 @@ function MateriasPrimas({ materias, onNueva }) {
               <th className="text-right px-4 py-2.5 font-medium">Mínimo</th>
               <th className="text-left px-4 py-2.5 font-medium">Proveedor</th>
               <th className="text-left px-4 py-2.5 font-medium">Caduca</th>
+              <th className="px-4 py-2.5"></th>
             </tr>
           </thead>
           <tbody>
@@ -477,6 +483,11 @@ function MateriasPrimas({ materias, onNueva }) {
                   <td className="px-4 py-2.5 text-right text-stone-400">{fmt(m.minimo)} {m.unidad}</td>
                   <td className="px-4 py-2.5 text-stone-500">{m.proveedor}</td>
                   <td className="px-4 py-2.5 text-stone-500">{m.caduca ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button onClick={() => onEliminar(m.id)} className="text-stone-300 hover:text-red-600">
+                      <Icon name="trash" size={15} />
+                    </button>
+                  </td>
                 </tr>
               );
             })}
