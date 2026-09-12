@@ -120,21 +120,36 @@ const seedProductos = [
 
 const seedOrdenes = [
   { id: "OP-1042", productoId: "pt1", cantidad: 500, estado: "en_lab",
-    confirmGlobal: true, confirmLab: false, envioConfirmLab: false, envioConfirmGlobal: false,
+    confirmGlobal: true, confirmLab: false, envios: [],
     historial: [{ evento: "Orden creada por ONANO Global", fecha: "2026-09-08" }] },
   { id: "OP-1041", productoId: "pt2", cantidad: 1200, estado: "producido_pendiente",
-    confirmGlobal: false, confirmLab: true, envioConfirmLab: false, envioConfirmGlobal: false,
+    confirmGlobal: false, confirmLab: true, envios: [],
     historial: [
       { evento: "Orden creada por ONANO Global", fecha: "2026-09-03" },
       { evento: "ONANO Lab confirma producción del lote", fecha: "2026-09-09" },
     ] },
-  { id: "OP-1039", productoId: "pt1", cantidad: 800, estado: "enviado",
-    confirmGlobal: true, confirmLab: true, envioConfirmLab: true, envioConfirmGlobal: false,
+  { id: "OP-1039", productoId: "pt1", cantidad: 800, estado: "enviando",
+    confirmGlobal: true, confirmLab: true,
+    envios: [
+      { id: "EN-1039a", cantidad: 500, fecha: "2026-08-28", recibido: false, fechaRecepcion: null },
+    ],
     historial: [
       { evento: "Orden creada por ONANO Global", fecha: "2026-08-20" },
       { evento: "ONANO Lab confirma producción del lote", fecha: "2026-08-25" },
       { evento: "ONANO Global confirma lote recibido en sistema", fecha: "2026-08-26" },
-      { evento: "ONANO Lab marca envío", fecha: "2026-08-28" },
+      { evento: "ONANO Lab envía 500 unidades (envío parcial)", fecha: "2026-08-28" },
+    ] },
+  { id: "OP-1035", productoId: "pt3", cantidad: 300, estado: "completado",
+    confirmGlobal: true, confirmLab: true,
+    envios: [
+      { id: "EN-1035a", cantidad: 300, fecha: "2026-08-05", recibido: true, fechaRecepcion: "2026-08-06" },
+    ],
+    historial: [
+      { evento: "Orden creada por ONANO Global", fecha: "2026-07-28" },
+      { evento: "ONANO Lab confirma producción del lote", fecha: "2026-08-01" },
+      { evento: "ONANO Global confirma lote recibido en sistema", fecha: "2026-08-02" },
+      { evento: "ONANO Lab envía 300 unidades (envío completo)", fecha: "2026-08-05" },
+      { evento: "ONANO Global confirma recepción de 300 unidades", fecha: "2026-08-06" },
     ] },
 ];
 
@@ -150,8 +165,8 @@ const ESTADO_INFO = {
   en_lab: { label: "En producción (Lab)", clase: "bg-amber-100 text-amber-800" },
   producido_pendiente: { label: "Producido — falta confirmar Global", clase: "bg-amber-100 text-amber-800" },
   confirmado: { label: "Confirmado — listo para envío", clase: "bg-teal-100 text-teal-800" },
-  enviado: { label: "Enviado — falta confirmar recepción", clase: "bg-blue-100 text-blue-800" },
-  recibido: { label: "Recibido y cerrado", clase: "bg-green-100 text-green-800" },
+  enviando: { label: "Envío en curso", clase: "bg-blue-100 text-blue-800" },
+  completado: { label: "Completado", clase: "bg-green-100 text-green-800" },
 };
 
 function fmt(n) {
@@ -231,7 +246,7 @@ function App() {
     const id = "OP-" + (1042 + ordenes.length + 1);
     setOrdenes((prev) => [
       { id, productoId, cantidad, estado: "solicitado",
-        confirmGlobal: true, confirmLab: false, envioConfirmLab: false, envioConfirmGlobal: false,
+        confirmGlobal: true, confirmLab: false, envios: [],
         historial: [{ evento: "Orden creada por ONANO Global", fecha: "2026-09-11" }] },
       ...prev,
     ]);
@@ -262,19 +277,46 @@ function App() {
     });
   }
 
-  function labMarcaEnvio(orden) {
-    setInventarioPT((prev) => ({ ...prev, [orden.productoId]: Math.max(0, (prev[orden.productoId] || 0) - orden.cantidad) }));
+  function labEnviaParcial(orden, cantidadSolicitada) {
+    const yaEnviado = orden.envios.reduce((s, e) => s + e.cantidad, 0);
+    const disponible = orden.cantidad - yaEnviado;
+    const cantidad = Math.min(Math.max(0, Math.round(cantidadSolicitada)), disponible);
+    if (cantidad <= 0) return;
+
+    const esCompleto = cantidad === disponible;
+    const nuevoEnvio = { id: "EN-" + Date.now(), cantidad, fecha: "2026-09-11", recibido: false, fechaRecepcion: null };
+
+    setInventarioPT((prev) => ({ ...prev, [orden.productoId]: Math.max(0, (prev[orden.productoId] || 0) - cantidad) }));
     actualizarOrden(orden.id, {
-      estado: "enviado", envioConfirmLab: true,
-      historial: [...orden.historial, { evento: "ONANO Lab marca envío del lote", fecha: "2026-09-11" }],
+      estado: "enviando",
+      envios: [...orden.envios, nuevoEnvio],
+      historial: [...orden.historial, {
+        evento: `ONANO Lab envía ${fmt(cantidad)} unidades (envío ${esCompleto ? "completo" : "parcial"})`,
+        fecha: "2026-09-11",
+      }],
     });
   }
 
-  function globalConfirmaRecepcion(orden) {
+  function globalConfirmaEnvio(orden, envioId) {
+    const envios = orden.envios.map((e) => (e.id === envioId ? { ...e, recibido: true, fechaRecepcion: "2026-09-11" } : e));
+    const totalEnviado = envios.reduce((s, e) => s + e.cantidad, 0);
+    const totalRecibido = envios.filter((e) => e.recibido).reduce((s, e) => s + e.cantidad, 0);
+    const completado = totalEnviado === orden.cantidad && totalRecibido === orden.cantidad;
+    const envio = envios.find((e) => e.id === envioId);
+
     actualizarOrden(orden.id, {
-      estado: "recibido", envioConfirmGlobal: true,
-      historial: [...orden.historial, { evento: "ONANO Global confirma recepción física del lote", fecha: "2026-09-11" }],
+      envios,
+      estado: completado ? "completado" : "enviando",
+      historial: [...orden.historial, {
+        evento: `ONANO Global confirma recepción de ${fmt(envio.cantidad)} unidades${completado ? " — orden completa" : ""}`,
+        fecha: "2026-09-11",
+      }],
     });
+  }
+
+  function eliminarOrden(id) {
+    if (!window.confirm("¿Eliminar esta orden de producción? Esta acción no se puede deshacer.")) return;
+    setOrdenes((prev) => prev.filter((o) => o.id !== id));
   }
 
   return (
@@ -302,8 +344,9 @@ function App() {
             onNueva={() => setNuevaOrden(true)}
             onLabProduce={labConfirmaProduccion}
             onGlobalConfirma={globalConfirmaLote}
-            onLabEnvia={labMarcaEnvio}
-            onGlobalRecibe={globalConfirmaRecepcion} />
+            onLabEnvia={labEnviaParcial}
+            onGlobalRecibeEnvio={globalConfirmaEnvio}
+            onEliminar={eliminarOrden} />
         )}
       </main>
 
@@ -701,7 +744,7 @@ function InventarioTerminado({ productos, inventarioPT }) {
   );
 }
 
-function Ordenes({ ordenes, productos, rol, onNueva, onLabProduce, onGlobalConfirma, onLabEnvia, onGlobalRecibe }) {
+function Ordenes({ ordenes, productos, rol, onNueva, onLabProduce, onGlobalConfirma, onLabEnvia, onGlobalRecibeEnvio, onEliminar }) {
   return (
     <div className="space-y-5">
       <header className="flex items-center justify-between">
@@ -718,41 +761,98 @@ function Ordenes({ ordenes, productos, rol, onNueva, onLabProduce, onGlobalConfi
       <div className="space-y-3">
         {ordenes.map((o) => (
           <OrdenCard key={o.id} orden={o} producto={productos.find((p) => p.id === o.productoId)} rol={rol}
-            onLabProduce={onLabProduce} onGlobalConfirma={onGlobalConfirma} onLabEnvia={onLabEnvia} onGlobalRecibe={onGlobalRecibe} />
+            onLabProduce={onLabProduce} onGlobalConfirma={onGlobalConfirma}
+            onLabEnvia={onLabEnvia} onGlobalRecibeEnvio={onGlobalRecibeEnvio} onEliminar={onEliminar} />
         ))}
       </div>
     </div>
   );
 }
 
-function OrdenCard({ orden, producto, rol, onLabProduce, onGlobalConfirma, onLabEnvia, onGlobalRecibe }) {
+function OrdenCard({ orden, producto, rol, onLabProduce, onGlobalConfirma, onLabEnvia, onGlobalRecibeEnvio, onEliminar }) {
   const puedeLab = rol === "lab";
   const puedeGlobal = rol === "global";
+  const [cantidadEnvio, setCantidadEnvio] = useState("");
+
+  const enviado = orden.envios.reduce((s, e) => s + e.cantidad, 0);
+  const recibido = orden.envios.filter((e) => e.recibido).reduce((s, e) => s + e.cantidad, 0);
+  const pendienteEnvio = orden.cantidad - enviado;
+
+  function enviar(cantidad) {
+    onLabEnvia(orden, cantidad);
+    setCantidadEnvio("");
+  }
+
   return (
     <div className="bg-white border border-stone-200 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="font-medium">{orden.id} · {producto?.nombre}</p>
-          <p className="text-xs text-stone-500">{fmt(orden.cantidad)} unidades</p>
+          <p className="text-xs text-stone-500">{fmt(orden.cantidad)} unidades solicitadas</p>
         </div>
         <EstadoBadge estado={orden.estado} />
       </div>
-      <div className="flex items-center gap-3 mb-4">
+
+      <div className="flex items-center gap-3 mb-3">
         <PasoConfirmacion label="Lab produce" hecho={orden.confirmLab} />
         <div className="h-px w-6 bg-stone-200" />
         <PasoConfirmacion label="Global confirma lote" hecho={orden.confirmGlobal && orden.estado !== "solicitado"} />
-        <div className="h-px w-6 bg-stone-200" />
-        <PasoConfirmacion label="Lab envía" hecho={orden.envioConfirmLab} />
-        <div className="h-px w-6 bg-stone-200" />
-        <PasoConfirmacion label="Global recibe" hecho={orden.envioConfirmGlobal} />
       </div>
-      <div className="flex gap-2 flex-wrap">
+
+      {(orden.confirmLab && orden.confirmGlobal) && (
+        <div className="mb-4 bg-stone-50 border border-stone-100 rounded-xl p-3">
+          <div className="flex items-center justify-between text-xs text-stone-500 mb-2">
+            <span>Enviado: <span className="font-medium text-stone-700">{fmt(enviado)} / {fmt(orden.cantidad)}</span></span>
+            <span>Recibido: <span className="font-medium text-stone-700">{fmt(recibido)} / {fmt(orden.cantidad)}</span></span>
+          </div>
+          {orden.envios.length > 0 && (
+            <div className="space-y-1.5 mb-2">
+              {orden.envios.map((e) => (
+                <div key={e.id} className="flex items-center justify-between text-xs">
+                  <span className="text-stone-600">{fmt(e.cantidad)} unidades · enviado {e.fecha}</span>
+                  {e.recibido ? (
+                    <span className="text-green-700 flex items-center gap-1"><Icon name="check" size={11} /> Recibido {e.fechaRecepcion}</span>
+                  ) : puedeGlobal ? (
+                    <AccionBtn onClick={() => onGlobalRecibeEnvio(orden, e.id)}>Confirmar recepción</AccionBtn>
+                  ) : (
+                    <span className="text-amber-700">Pendiente de recepción</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {pendienteEnvio > 0 && puedeLab && (
+            <div className="flex items-center gap-2 mt-2">
+              <input type="number" value={cantidadEnvio} onChange={(e) => setCantidadEnvio(e.target.value)}
+                placeholder={`Máx. ${fmt(pendienteEnvio)}`}
+                className="text-xs border border-stone-200 rounded-lg px-2.5 py-1.5 w-32" />
+              <button onClick={() => enviar(Number(cantidadEnvio) || 0)}
+                disabled={!cantidadEnvio}
+                className="text-xs px-3 py-1.5 rounded-lg bg-stone-900 text-white disabled:opacity-30">
+                Enviar parcial
+              </button>
+              <button onClick={() => enviar(pendienteEnvio)} className="text-xs px-3 py-1.5 rounded-lg border border-stone-200">
+                Enviar resto ({fmt(pendienteEnvio)})
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 flex-wrap">
         {orden.estado === "en_lab" && puedeLab && <AccionBtn onClick={() => onLabProduce(orden)}>Confirmar producción del lote (Lab)</AccionBtn>}
         {orden.estado === "producido_pendiente" && puedeGlobal && <AccionBtn onClick={() => onGlobalConfirma(orden)}>Confirmar lote recibido en sistema (Global)</AccionBtn>}
-        {orden.estado === "confirmado" && puedeLab && <AccionBtn onClick={() => onLabEnvia(orden)}>Marcar como enviado (Lab)</AccionBtn>}
-        {orden.estado === "enviado" && puedeGlobal && <AccionBtn onClick={() => onGlobalRecibe(orden)}>Confirmar recepción física (Global)</AccionBtn>}
-        {orden.estado === "recibido" && <p className="text-xs text-green-700 flex items-center gap-1"><Icon name="check" size={13} /> Ciclo completo</p>}
+        {orden.estado === "completado" && (
+          <>
+            <p className="text-xs text-green-700 flex items-center gap-1"><Icon name="check" size={13} /> Producción enviada y recibida por completo</p>
+            <button onClick={() => onEliminar(orden.id)}
+              className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-1">
+              <Icon name="trash" size={13} /> Eliminar orden
+            </button>
+          </>
+        )}
       </div>
+
       <details className="mt-3">
         <summary className="text-xs text-stone-400 cursor-pointer">Historial</summary>
         <div className="mt-2 space-y-1">
