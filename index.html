@@ -642,17 +642,62 @@ function Productos({ productos, materias, onNuevo, onEliminar }) {
 function ModalProducto({ materias, onClose, onSave }) {
   const [nombre, setNombre] = useState("");
   const [presentacion, setPresentacion] = useState("");
-  const [receta, setReceta] = useState([{ materiaId: materias[0]?.id || "", cantidad: "" }]);
+  const activos = materias.filter((m) => m.tipo === "activo");
+  const empaques = materias.filter((m) => m.tipo === "empaque");
+  const [recetaActivos, setRecetaActivos] = useState(activos.length ? [{ materiaId: activos[0].id, cantidad: "" }] : []);
+  const [recetaEmpaque, setRecetaEmpaque] = useState(empaques.length ? [{ materiaId: empaques[0].id, cantidad: "" }] : []);
   const inputCls = "w-full text-sm border border-stone-200 rounded-lg px-2.5 py-2 bg-white";
 
-  function actualizarLinea(i, campo, valor) {
-    setReceta((prev) => prev.map((r, idx) => (idx === i ? { ...r, [campo]: valor } : r)));
+  function lineaSetter(seccion) {
+    return seccion === "activo" ? setRecetaActivos : setRecetaEmpaque;
   }
-  function agregarLinea() {
-    setReceta((prev) => [...prev, { materiaId: materias[0]?.id || "", cantidad: "" }]);
+  function actualizarLinea(seccion, i, campo, valor) {
+    lineaSetter(seccion)((prev) => prev.map((r, idx) => (idx === i ? { ...r, [campo]: valor } : r)));
   }
-  function quitarLinea(i) {
-    setReceta((prev) => prev.filter((_, idx) => idx !== i));
+  function agregarLinea(seccion) {
+    const opciones = seccion === "activo" ? activos : empaques;
+    lineaSetter(seccion)((prev) => [...prev, { materiaId: opciones[0]?.id || "", cantidad: "" }]);
+  }
+  function quitarLinea(seccion, i) {
+    lineaSetter(seccion)((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function SeccionReceta({ titulo, seccion, lineas, opciones }) {
+    return (
+      <div className="mb-4">
+        <p className="text-xs text-stone-500 mb-1.5">{titulo}</p>
+        {opciones.length === 0 && (
+          <p className="text-xs text-stone-400 mb-2">No hay materias primas de este tipo en el catálogo todavía.</p>
+        )}
+        <div className="space-y-2 mb-2">
+          {lineas.map((r, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <select value={r.materiaId} onChange={(e) => actualizarLinea(seccion, i, "materiaId", e.target.value)} className={inputCls}>
+                {opciones.map((m) => (
+                  <option key={m.id} value={m.id}>{m.nombre}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={r.cantidad}
+                onChange={(e) => actualizarLinea(seccion, i, "cantidad", e.target.value)}
+                className={inputCls}
+                style={{ width: "90px" }}
+                placeholder="Cant."
+              />
+              <button onClick={() => quitarLinea(seccion, i)} className="text-stone-400 hover:text-red-600">
+                <Icon name="x" size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+        {opciones.length > 0 && (
+          <button onClick={() => agregarLinea(seccion)} className="text-xs text-stone-500 flex items-center gap-1 hover:text-stone-900">
+            <Icon name="plus" size={12} /> Agregar {seccion === "activo" ? "ingrediente activo" : "material de empaque"}
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -664,42 +709,17 @@ function ModalProducto({ materias, onClose, onSave }) {
         <input value={presentacion} onChange={(e) => setPresentacion(e.target.value)} className={inputCls} placeholder="Ej. Shot líquido 30ml" />
       </Field>
 
-      <p className="text-xs text-stone-500 mb-1.5">Receta (materia prima por unidad producida)</p>
-      <div className="space-y-2 mb-2">
-        {receta.map((r, i) => (
-          <div key={i} className="flex gap-2 items-center">
-            <select value={r.materiaId} onChange={(e) => actualizarLinea(i, "materiaId", e.target.value)} className={inputCls}>
-              {materias.map((m) => (
-                <option key={m.id} value={m.id}>{m.nombre}</option>
-              ))}
-            </select>
-            <input
-              type="number"
-              value={r.cantidad}
-              onChange={(e) => actualizarLinea(i, "cantidad", e.target.value)}
-              className={inputCls}
-              style={{ width: "90px" }}
-              placeholder="Cant."
-            />
-            <button onClick={() => quitarLinea(i)} className="text-stone-400 hover:text-red-600">
-              <Icon name="x" size={15} />
-            </button>
-          </div>
-        ))}
-      </div>
-      <button onClick={agregarLinea} className="text-xs text-stone-500 flex items-center gap-1 mb-4 hover:text-stone-900">
-        <Icon name="plus" size={12} /> Agregar materia prima a la receta
-      </button>
+      <SeccionReceta titulo="Ingredientes activos (por unidad producida)" seccion="activo" lineas={recetaActivos} opciones={activos} />
+      <SeccionReceta titulo="Material de empaque (por unidad producida)" seccion="empaque" lineas={recetaEmpaque} opciones={empaques} />
 
       <div className="flex justify-end gap-2">
         <button onClick={onClose} className="text-sm px-3.5 py-2 rounded-lg border border-stone-200">Cancelar</button>
         <button
           onClick={() => {
             if (!nombre) return;
-            const recetaLimpia = receta
-              .filter((r) => r.materiaId && r.cantidad)
-              .map((r) => ({ materiaId: r.materiaId, cantidad: Number(r.cantidad) }));
-            onSave({ nombre, presentacion, receta: recetaLimpia });
+            const limpiar = (r) => r.filter((x) => x.materiaId && x.cantidad).map((x) => ({ materiaId: x.materiaId, cantidad: Number(x.cantidad) }));
+            const receta = [...limpiar(recetaActivos), ...limpiar(recetaEmpaque)];
+            onSave({ nombre, presentacion, receta });
             onClose();
           }}
           className="text-sm px-3.5 py-2 rounded-lg bg-stone-900 text-white"
