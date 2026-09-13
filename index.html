@@ -170,8 +170,8 @@ const seedOrdenesEnvio = [
 ];
 
 const seedCuentas = [
-  { email: "lab@onano.com", password: "onanolab2026", empresa: "lab" },
-  { email: "global@onano.com", password: "onanoglobal2026", empresa: "global" },
+  { email: "lab@onano.com", password: "onanolab2026", empresa: "lab", demo: true },
+  { email: "global@onano.com", password: "onanoglobal2026", empresa: "global", demo: true },
 ];
 
 const ESTADO_INFO = {
@@ -218,13 +218,16 @@ function App() {
     if (cuentas.some((c) => c.email.toLowerCase() === email.toLowerCase())) {
       return { ok: false, error: "Ya existe una cuenta con ese correo." };
     }
-    setCuentas((prev) => [...prev, { email, password, empresa }]);
+    setCuentas((prev) => [
+      ...prev.filter((c) => !(c.demo && c.empresa === empresa)),
+      { email, password, empresa },
+    ]);
     setSesion({ email, empresa });
     return { ok: true };
   }
 
   if (!sesion) {
-    return <Login onIngresar={iniciarSesion} onRegistrar={registrarCuenta} />;
+    return <Login cuentas={cuentas} onIngresar={iniciarSesion} onRegistrar={registrarCuenta} />;
   }
 
   const rol = sesion.empresa;
@@ -1192,7 +1195,7 @@ function ModalOrdenEnvio({ productos, inventarioPT, onClose, onCrear }) {
   );
 }
 
-function Login({ onIngresar, onRegistrar }) {
+function Login({ cuentas, onIngresar, onRegistrar }) {
   const [modo, setModo] = useState("ingresar");
   const [empresa, setEmpresa] = useState("lab");
   const [email, setEmail] = useState("");
@@ -1200,6 +1203,7 @@ function Login({ onIngresar, onRegistrar }) {
   const [password2, setPassword2] = useState("");
   const [error, setError] = useState("");
   const inputCls = "w-full text-sm border border-stone-200 rounded-lg px-3 py-2 bg-white";
+  const cuentasDemo = cuentas.filter((c) => c.demo);
 
   function submit() {
     setError("");
@@ -1257,11 +1261,18 @@ function Login({ onIngresar, onRegistrar }) {
           {modo === "ingresar" ? "Entrar" : "Crear cuenta y entrar"}
         </button>
 
-        <p className="text-xs text-stone-400 mt-4 leading-relaxed">
-          Cuentas de prueba:<br />
-          lab@onano.com / onanolab2026<br />
-          global@onano.com / onanoglobal2026
-        </p>
+        {cuentasDemo.length > 0 ? (
+          <p className="text-xs text-stone-400 mt-4 leading-relaxed">
+            Cuentas de prueba activas:<br />
+            {cuentasDemo.map((c) => (
+              <span key={c.email}>{c.email} / {c.password}<br /></span>
+            ))}
+          </p>
+        ) : (
+          <p className="text-xs text-stone-400 mt-4 leading-relaxed">
+            Ya no hay cuentas de prueba activas — usa las cuentas reales que se crearon.
+          </p>
+        )}
       </div>
     </div>
   );
