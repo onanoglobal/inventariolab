@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<title>ONANO · Prototipo de inventario</title>
+<title>ONANO · Inventario</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -18,7 +18,7 @@
 <script type="text/jsx-source" id="app-source">
 const { useState } = React;
 
-/* icono minimalista basado en trazos, sin dependencias externas */
+/* ---------- icono minimalista, sin dependencias externas ---------- */
 function Icon({ name, size = 16, className = "" }) {
   const paths = {
     dashboard: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
@@ -43,136 +43,15 @@ function Icon({ name, size = 16, className = "" }) {
   );
 }
 
-const seedMaterias = [
-  { id: "mp1", tipo: "activo", nombre: "Glutatión reducido", unidad: "g", stock: 4200, minimo: 1500, proveedor: "BioActives Corp", lote: "GLU-2609", caduca: "2027-03-01" },
-  { id: "mp2", tipo: "activo", nombre: "L-Cisteína", unidad: "g", stock: 3100, minimo: 1000, proveedor: "BioActives Corp", lote: "CIS-2608", caduca: "2027-01-15" },
-  { id: "mp3", tipo: "activo", nombre: "Curcumina 95%", unidad: "g", stock: 800, minimo: 1000, proveedor: "PhytoLab", lote: "CUR-2607", caduca: "2026-11-20" },
-  { id: "mp4", tipo: "activo", nombre: "Astaxantina", unidad: "g", stock: 1600, minimo: 500, proveedor: "AlgaeSource", lote: "AST-2609", caduca: "2027-06-01" },
-  { id: "mp5", tipo: "empaque", nombre: "Frasco ámbar 30ml", unidad: "pieza", stock: 5200, minimo: 2000, proveedor: "Envases Del Norte", lote: "FR30-118", caduca: null },
-  { id: "mp6", tipo: "empaque", nombre: "Etiqueta genérica", unidad: "pieza", stock: 1800, minimo: 2000, proveedor: "Impresos Vega", lote: "ET-44", caduca: null },
-  { id: "mp7", tipo: "empaque", nombre: "Caja individual genérica", unidad: "pieza", stock: 4800, minimo: 2000, proveedor: "Cartonera Reyes", lote: "CJ-19", caduca: null },
-  { id: "mp8", tipo: "empaque", nombre: "Sello de seguridad", unidad: "pieza", stock: 5000, minimo: 2000, proveedor: "Impresos Vega", lote: "SEL-77", caduca: null },
-  { id: "mp9", tipo: "activo", nombre: "Omega-5", unidad: "g", stock: 2200, minimo: 1000, proveedor: "AlgaeSource", lote: "OM5-2606", caduca: "2027-04-10" },
-  { id: "mp10", tipo: "activo", nombre: "Resveratrol", unidad: "g", stock: 2600, minimo: 1200, proveedor: "PhytoLab", lote: "RSV-2605", caduca: "2027-02-18" },
-  { id: "mp11", tipo: "activo", nombre: "Quercetina", unidad: "g", stock: 1400, minimo: 1000, proveedor: "PhytoLab", lote: "QRC-2604", caduca: "2026-12-30" },
-];
+/* ---------- utilidades ---------- */
+function fmt(n) {
+  return new Intl.NumberFormat("es-MX").format(Math.round((Number(n) || 0) * 100) / 100);
+}
 
-const seedProductos = [
-  { id: "pt1", nombre: "SLEEPMAX", presentacion: "Shot líquido 30ml",
-    receta: [
-      { materiaId: "mp2", cantidad: 0.3 },
-      { materiaId: "mp5", cantidad: 1 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-      { materiaId: "mp8", cantidad: 1 },
-    ] },
-  { id: "pt2", nombre: "ZENMAX", presentacion: "Shot líquido 30ml",
-    receta: [
-      { materiaId: "mp4", cantidad: 0.05 },
-      { materiaId: "mp5", cantidad: 1 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-      { materiaId: "mp8", cantidad: 1 },
-    ] },
-  { id: "pt3", nombre: "GSHMAX", presentacion: "Shot líquido 30ml",
-    receta: [
-      { materiaId: "mp1", cantidad: 0.4 },
-      { materiaId: "mp5", cantidad: 1 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-      { materiaId: "mp8", cantidad: 1 },
-    ] },
-  { id: "pt4", nombre: "AXMAX", presentacion: "Shot líquido 30ml",
-    receta: [
-      { materiaId: "mp4", cantidad: 0.08 },
-      { materiaId: "mp5", cantidad: 1 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-      { materiaId: "mp8", cantidad: 1 },
-    ] },
-  { id: "pt5", nombre: "O5MAX", presentacion: "Shot líquido 30ml",
-    receta: [
-      { materiaId: "mp9", cantidad: 1 },
-      { materiaId: "mp5", cantidad: 1 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-      { materiaId: "mp8", cantidad: 1 },
-    ] },
-  { id: "pt6", nombre: "RESHMAX", presentacion: "Cápsulas 60ct",
-    receta: [
-      { materiaId: "mp10", cantidad: 5 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-    ] },
-  { id: "pt7", nombre: "RESHMAX Coffee", presentacion: "Sobres solubles 30ct",
-    receta: [
-      { materiaId: "mp10", cantidad: 4 },
-      { materiaId: "mp3", cantidad: 1 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-    ] },
-  { id: "pt8", nombre: "QMAX", presentacion: "Cápsulas 60ct",
-    receta: [
-      { materiaId: "mp11", cantidad: 5 },
-      { materiaId: "mp6", cantidad: 1 },
-      { materiaId: "mp7", cantidad: 1 },
-    ] },
-];
-
-const seedOrdenes = [
-  { id: "OP-1042", productoId: "pt1", cantidad: 500, estado: "en_lab",
-    confirmGlobal: true, confirmLab: false, envios: [],
-    historial: [{ evento: "Orden creada por ONANO Global", fecha: "2026-09-08" }] },
-  { id: "OP-1041", productoId: "pt2", cantidad: 1200, estado: "producido_pendiente",
-    confirmGlobal: false, confirmLab: true, envios: [],
-    historial: [
-      { evento: "Orden creada por ONANO Global", fecha: "2026-09-03" },
-      { evento: "ONANO Lab confirma producción del lote", fecha: "2026-09-09" },
-    ] },
-  { id: "OP-1039", productoId: "pt1", cantidad: 800, estado: "enviando",
-    confirmGlobal: true, confirmLab: true,
-    envios: [
-      { id: "EN-1039a", cantidad: 500, fecha: "2026-08-28", recibido: false, fechaRecepcion: null },
-    ],
-    historial: [
-      { evento: "Orden creada por ONANO Global", fecha: "2026-08-20" },
-      { evento: "ONANO Lab confirma producción del lote", fecha: "2026-08-25" },
-      { evento: "ONANO Global confirma lote recibido en sistema", fecha: "2026-08-26" },
-      { evento: "ONANO Lab envía 500 unidades (envío parcial)", fecha: "2026-08-28" },
-    ] },
-  { id: "OP-1035", productoId: "pt3", cantidad: 300, estado: "completado",
-    confirmGlobal: true, confirmLab: true,
-    envios: [
-      { id: "EN-1035a", cantidad: 300, fecha: "2026-08-05", recibido: true, fechaRecepcion: "2026-08-06" },
-    ],
-    historial: [
-      { evento: "Orden creada por ONANO Global", fecha: "2026-07-28" },
-      { evento: "ONANO Lab confirma producción del lote", fecha: "2026-08-01" },
-      { evento: "ONANO Global confirma lote recibido en sistema", fecha: "2026-08-02" },
-      { evento: "ONANO Lab envía 300 unidades (envío completo)", fecha: "2026-08-05" },
-      { evento: "ONANO Global confirma recepción de 300 unidades", fecha: "2026-08-06" },
-    ] },
-];
-
-const seedInventarioPT = { pt1: 320, pt2: 150, pt3: 210, pt4: 0, pt5: 90, pt6: 400, pt7: 60, pt8: 0 };
-
-const seedOrdenesEnvio = [
-  { id: "OE-2001", productoId: "pt6", cantidad: 150, estado: "solicitado", confirmLab: false, envios: [],
-    historial: [{ evento: "ONANO Global solicita el envío de producto terminado", fecha: "2026-09-10" }] },
-  { id: "OE-2000", productoId: "pt1", cantidad: 200, estado: "enviando", confirmLab: true,
-    envios: [{ id: "EN-2000a", cantidad: 120, fecha: "2026-09-07", recibido: true, fechaRecepcion: "2026-09-08" }],
-    historial: [
-      { evento: "ONANO Global solicita el envío de producto terminado", fecha: "2026-09-05" },
-      { evento: "ONANO Lab confirma la solicitud y prepara el envío", fecha: "2026-09-06" },
-      { evento: "ONANO Lab envía 120 unidades (envío parcial)", fecha: "2026-09-07" },
-      { evento: "ONANO Global confirma recepción de 120 unidades", fecha: "2026-09-08" },
-    ] },
-];
-
-const seedCuentas = [
-  { email: "lab@onano.com", password: "onanolab2026", empresa: "lab", demo: true },
-  { email: "global@onano.com", password: "onanoglobal2026", empresa: "global", demo: true },
-];
+function diasParaCaducar(fecha) {
+  if (!fecha) return null;
+  return Math.ceil((new Date(fecha) - new Date()) / 86400000);
+}
 
 const ESTADO_INFO = {
   solicitado: { label: "Solicitado", clase: "bg-stone-100 text-stone-600" },
@@ -183,54 +62,270 @@ const ESTADO_INFO = {
   completado: { label: "Completado", clase: "bg-green-100 text-green-800" },
 };
 
-function fmt(n) {
-  return new Intl.NumberFormat("es-MX").format(Math.round(n * 100) / 100);
+/* ---------- capa de conexión con el backend real ---------- */
+async function apiFetch(apiUrl, path, { token, method = "GET", body } = {}) {
+  let res;
+  try {
+    res = await fetch(apiUrl + path, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: "Bearer " + token } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (e) {
+    throw new Error("No se pudo conectar con el servidor (" + apiUrl + "). ¿Está corriendo el backend?");
+  }
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) throw new Error(data.error || ("Error " + res.status));
+  return data;
 }
 
-function diasParaCaducar(fecha) {
-  if (!fecha) return null;
-  return Math.ceil((new Date(fecha) - new Date("2026-09-11")) / 86400000);
+function mapOrden(o) {
+  return {
+    id: o.id,
+    folio: o.folio,
+    productoId: o.producto_id,
+    cantidad: o.cantidad,
+    estado: o.estado,
+    confirmLab: !!o.confirm_lab,
+    confirmGlobal: !!o.confirm_global,
+    envios: (o.envios || []).map((e) => ({
+      id: e.id,
+      cantidad: e.cantidad,
+      fecha: (e.enviado_en || "").slice(0, 10),
+      recibido: !!e.recibido,
+      fechaRecepcion: e.recibido_en ? e.recibido_en.slice(0, 10) : null,
+    })),
+    historial: (o.historial || []).map((h) => ({ evento: h.evento, fecha: (h.fecha || "").slice(0, 10) })),
+  };
 }
 
+function mapProducto(p) {
+  return { ...p, receta: (p.receta || []).map((r) => ({ materiaId: r.materia_id, cantidad: r.cantidad })) };
+}
+
+/* ---------- App ---------- */
 function App() {
-  const [cuentas, setCuentas] = useState(seedCuentas);
-  const [sesion, setSesion] = useState(null);
+  const [apiUrl, setApiUrl] = useState("http://localhost:4000/api");
+  const [token, setToken] = useState(null);
+  const [usuario, setUsuario] = useState(null);
   const [tab, setTab] = useState("dashboard");
-  const [materias, setMaterias] = useState(seedMaterias);
-  const [productos, setProductos] = useState(seedProductos);
-  const [inventarioPT, setInventarioPT] = useState(seedInventarioPT);
-  const [ordenes, setOrdenes] = useState(seedOrdenes);
+
+  const [materias, setMaterias] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [inventarioPT, setInventarioPT] = useState({});
+  const [ordenes, setOrdenes] = useState([]);
+  const [ordenesEnvio, setOrdenesEnvio] = useState([]);
+
+  const [cargando, setCargando] = useState(false);
+  const [errorCarga, setErrorCarga] = useState("");
+
   const [modalMateria, setModalMateria] = useState(false);
   const [modalProducto, setModalProducto] = useState(false);
   const [nuevaOrden, setNuevaOrden] = useState(false);
-  const [ordenesEnvio, setOrdenesEnvio] = useState(seedOrdenesEnvio);
   const [nuevoEnvio, setNuevoEnvio] = useState(false);
 
-  function iniciarSesion({ email, password }) {
-    const cuenta = cuentas.find((c) => c.email.toLowerCase() === email.toLowerCase() && c.password === password);
-    if (!cuenta) return { ok: false, error: "Correo o contraseña incorrectos." };
-    setSesion({ email: cuenta.email, empresa: cuenta.empresa });
-    return { ok: true };
+  async function refrescarMaterias(tok) {
+    const r = await apiFetch(apiUrl, "/materias", { token: tok || token });
+    setMaterias(r.materias);
+  }
+  async function refrescarProductos(tok) {
+    const r = await apiFetch(apiUrl, "/productos", { token: tok || token });
+    setProductos(r.productos.map(mapProducto));
+  }
+  async function refrescarInventario(tok) {
+    const r = await apiFetch(apiUrl, "/inventario-terminado", { token: tok || token });
+    setInventarioPT(Object.fromEntries(r.inventario.map((x) => [x.producto_id, x.stock])));
+  }
+  async function refrescarOrdenes(tok) {
+    const r = await apiFetch(apiUrl, "/ordenes-produccion", { token: tok || token });
+    setOrdenes(r.ordenes.map(mapOrden));
+  }
+  async function refrescarOrdenesEnvio(tok) {
+    const r = await apiFetch(apiUrl, "/ordenes-envio", { token: tok || token });
+    setOrdenesEnvio(r.ordenes.map(mapOrden));
   }
 
-  function registrarCuenta({ email, password, empresa }) {
-    if (!email || !password) return { ok: false, error: "Completa correo y contraseña." };
-    if (cuentas.some((c) => c.email.toLowerCase() === email.toLowerCase())) {
-      return { ok: false, error: "Ya existe una cuenta con ese correo." };
+  async function cargarTodo(tok) {
+    setCargando(true);
+    setErrorCarga("");
+    try {
+      await Promise.all([
+        refrescarMaterias(tok),
+        refrescarProductos(tok),
+        refrescarInventario(tok),
+        refrescarOrdenes(tok),
+        refrescarOrdenesEnvio(tok),
+      ]);
+    } catch (e) {
+      setErrorCarga(e.message);
+    } finally {
+      setCargando(false);
     }
-    setCuentas((prev) => [
-      ...prev.filter((c) => !(c.demo && c.empresa === empresa)),
-      { email, password, empresa },
-    ]);
-    setSesion({ email, empresa });
-    return { ok: true };
   }
 
-  if (!sesion) {
-    return <Login cuentas={cuentas} onIngresar={iniciarSesion} onRegistrar={registrarCuenta} />;
+  async function ejecutar(accion) {
+    try {
+      await accion();
+    } catch (e) {
+      setErrorCarga(e.message);
+    }
   }
 
-  const rol = sesion.empresa;
+  async function iniciarSesion({ email, password }) {
+    try {
+      const r = await apiFetch(apiUrl, "/auth/login", { method: "POST", body: { email, password } });
+      setToken(r.token);
+      setUsuario(r.usuario);
+      await cargarTodo(r.token);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  async function registrarCuenta({ email, password, empresa }) {
+    try {
+      const r = await apiFetch(apiUrl, "/auth/register", { method: "POST", body: { email, password, empresa } });
+      setToken(r.token);
+      setUsuario(r.usuario);
+      await cargarTodo(r.token);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  async function solicitarRecuperacion(email) {
+    try {
+      const r = await apiFetch(apiUrl, "/auth/forgot-password", { method: "POST", body: { email } });
+      return { ok: true, ...r };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  async function restablecerPassword({ email, token: tk, password }) {
+    try {
+      const r = await apiFetch(apiUrl, "/auth/reset-password", { method: "POST", body: { email, token: tk, password } });
+      return { ok: true, ...r };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  function cerrarSesion() {
+    setToken(null);
+    setUsuario(null);
+    setMaterias([]); setProductos([]); setInventarioPT({}); setOrdenes([]); setOrdenesEnvio([]);
+    setTab("dashboard");
+  }
+
+  if (!token || !usuario) {
+    return (
+      <Login apiUrl={apiUrl} setApiUrl={setApiUrl} onIngresar={iniciarSesion} onRegistrar={registrarCuenta}
+        onOlvide={solicitarRecuperacion} onRestablecer={restablecerPassword} />
+    );
+  }
+
+  const rol = usuario.empresa;
+
+  async function agregarMateria(m) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/materias", { token, method: "POST", body: m });
+      await refrescarMaterias();
+    });
+  }
+  async function eliminarMateria(id) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/materias/" + id, { token, method: "DELETE" });
+      await refrescarMaterias();
+    });
+  }
+  async function agregarProducto(p) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/productos", { token, method: "POST", body: p });
+      await Promise.all([refrescarProductos(), refrescarInventario()]);
+    });
+  }
+  async function eliminarProducto(id) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/productos/" + id, { token, method: "DELETE" });
+      await Promise.all([refrescarProductos(), refrescarInventario()]);
+    });
+  }
+  async function crearOrden(productoId, cantidad) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/ordenes-produccion", { token, method: "POST", body: { productoId, cantidad } });
+      await refrescarOrdenes();
+    });
+  }
+  async function labConfirmaProduccion(orden) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, `/ordenes-produccion/${orden.id}/confirmar-produccion`, { token, method: "POST" });
+      await Promise.all([refrescarOrdenes(), refrescarMaterias(), refrescarInventario()]);
+    });
+  }
+  async function globalConfirmaLote(orden) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, `/ordenes-produccion/${orden.id}/confirmar-lote`, { token, method: "POST" });
+      await refrescarOrdenes();
+    });
+  }
+  async function labEnviaParcial(orden, cantidad) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, `/ordenes-produccion/${orden.id}/enviar`, { token, method: "POST", body: { cantidad } });
+      await Promise.all([refrescarOrdenes(), refrescarInventario()]);
+    });
+  }
+  async function globalConfirmaEnvio(orden, envioId) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, `/ordenes-produccion/${orden.id}/envios/${envioId}/confirmar-recepcion`, { token, method: "POST" });
+      await refrescarOrdenes();
+    });
+  }
+  async function eliminarOrden(id) {
+    if (!window.confirm("¿Eliminar esta orden de producción? Esta acción no se puede deshacer.")) return;
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/ordenes-produccion/" + id, { token, method: "DELETE" });
+      await refrescarOrdenes();
+    });
+  }
+
+  async function crearSolicitudEnvio(productoId, cantidad) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/ordenes-envio", { token, method: "POST", body: { productoId, cantidad } });
+      await refrescarOrdenesEnvio();
+    });
+  }
+  async function labConfirmaSolicitud(orden) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, `/ordenes-envio/${orden.id}/confirmar-solicitud`, { token, method: "POST" });
+      await refrescarOrdenesEnvio();
+    });
+  }
+  async function labEnviaSolicitud(orden, cantidad) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, `/ordenes-envio/${orden.id}/enviar`, { token, method: "POST", body: { cantidad } });
+      await Promise.all([refrescarOrdenesEnvio(), refrescarInventario()]);
+    });
+  }
+  async function globalConfirmaRecepcionSolicitud(orden, envioId) {
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, `/ordenes-envio/${orden.id}/envios/${envioId}/confirmar-recepcion`, { token, method: "POST" });
+      await refrescarOrdenesEnvio();
+    });
+  }
+  async function eliminarOrdenEnvio(id) {
+    if (!window.confirm("¿Eliminar esta solicitud de envío? Esta acción no se puede deshacer.")) return;
+    await ejecutar(async () => {
+      await apiFetch(apiUrl, "/ordenes-envio/" + id, { token, method: "DELETE" });
+      await refrescarOrdenesEnvio();
+    });
+  }
 
   const stockBajo = materias.filter((m) => m.stock < m.minimo);
   const porCaducar = materias.filter((m) => {
@@ -238,172 +333,18 @@ function App() {
     return d !== null && d <= 60 && d >= 0;
   });
 
-  function agregarMateria(m) {
-    setMaterias((prev) => [...prev, { ...m, id: "mp" + (prev.length + 1) }]);
-  }
-
-  function eliminarMateria(id) {
-    if (!window.confirm("¿Eliminar esta materia prima? También se quitará de las recetas que la usen.")) return;
-    setMaterias((prev) => prev.filter((m) => m.id !== id));
-  }
-
-  function agregarProducto(p) {
-    setProductos((prev) => [...prev, { ...p, id: "pt" + Date.now() }]);
-  }
-
-  function eliminarProducto(id) {
-    if (!window.confirm("¿Eliminar este producto? También se quitará de su inventario.")) return;
-    setProductos((prev) => prev.filter((p) => p.id !== id));
-    setInventarioPT((prev) => {
-      const copia = { ...prev };
-      delete copia[id];
-      return copia;
-    });
-  }
-
-  function crearOrden(productoId, cantidad) {
-    const id = "OP-" + (1042 + ordenes.length + 1);
-    setOrdenes((prev) => [
-      { id, productoId, cantidad, estado: "solicitado",
-        confirmGlobal: true, confirmLab: false, envios: [],
-        historial: [{ evento: "Orden creada por ONANO Global", fecha: "2026-09-11" }] },
-      ...prev,
-    ]);
-  }
-
-  function actualizarOrden(id, cambios) {
-    setOrdenes((prev) => prev.map((o) => (o.id === id ? { ...o, ...cambios } : o)));
-  }
-
-  function labConfirmaProduccion(orden) {
-    const producto = productos.find((p) => p.id === orden.productoId);
-    setMaterias((prev) => prev.map((m) => {
-      const linea = producto.receta.find((r) => r.materiaId === m.id);
-      if (!linea) return m;
-      return { ...m, stock: m.stock - linea.cantidad * orden.cantidad };
-    }));
-    setInventarioPT((prev) => ({ ...prev, [orden.productoId]: (prev[orden.productoId] || 0) + orden.cantidad }));
-    actualizarOrden(orden.id, {
-      estado: "producido_pendiente", confirmLab: true,
-      historial: [...orden.historial, { evento: "ONANO Lab confirma producción del lote", fecha: "2026-09-11" }],
-    });
-  }
-
-  function globalConfirmaLote(orden) {
-    actualizarOrden(orden.id, {
-      estado: "confirmado", confirmGlobal: true,
-      historial: [...orden.historial, { evento: "ONANO Global confirma el lote recibido en sistema", fecha: "2026-09-11" }],
-    });
-  }
-
-  function labEnviaParcial(orden, cantidadSolicitada) {
-    const yaEnviado = orden.envios.reduce((s, e) => s + e.cantidad, 0);
-    const disponible = orden.cantidad - yaEnviado;
-    const cantidad = Math.min(Math.max(0, Math.round(cantidadSolicitada)), disponible);
-    if (cantidad <= 0) return;
-
-    const esCompleto = cantidad === disponible;
-    const nuevoEnvio = { id: "EN-" + Date.now(), cantidad, fecha: "2026-09-11", recibido: false, fechaRecepcion: null };
-
-    setInventarioPT((prev) => ({ ...prev, [orden.productoId]: Math.max(0, (prev[orden.productoId] || 0) - cantidad) }));
-    actualizarOrden(orden.id, {
-      estado: "enviando",
-      envios: [...orden.envios, nuevoEnvio],
-      historial: [...orden.historial, {
-        evento: `ONANO Lab envía ${fmt(cantidad)} unidades (envío ${esCompleto ? "completo" : "parcial"})`,
-        fecha: "2026-09-11",
-      }],
-    });
-  }
-
-  function globalConfirmaEnvio(orden, envioId) {
-    const envios = orden.envios.map((e) => (e.id === envioId ? { ...e, recibido: true, fechaRecepcion: "2026-09-11" } : e));
-    const totalEnviado = envios.reduce((s, e) => s + e.cantidad, 0);
-    const totalRecibido = envios.filter((e) => e.recibido).reduce((s, e) => s + e.cantidad, 0);
-    const completado = totalEnviado === orden.cantidad && totalRecibido === orden.cantidad;
-    const envio = envios.find((e) => e.id === envioId);
-
-    actualizarOrden(orden.id, {
-      envios,
-      estado: completado ? "completado" : "enviando",
-      historial: [...orden.historial, {
-        evento: `ONANO Global confirma recepción de ${fmt(envio.cantidad)} unidades${completado ? " — orden completa" : ""}`,
-        fecha: "2026-09-11",
-      }],
-    });
-  }
-
-  function eliminarOrden(id) {
-    if (!window.confirm("¿Eliminar esta orden de producción? Esta acción no se puede deshacer.")) return;
-    setOrdenes((prev) => prev.filter((o) => o.id !== id));
-  }
-
-  function crearSolicitudEnvio(productoId, cantidad) {
-    const id = "OE-" + (2001 + ordenesEnvio.length + 1);
-    setOrdenesEnvio((prev) => [
-      { id, productoId, cantidad, estado: "solicitado", confirmLab: false, envios: [],
-        historial: [{ evento: "ONANO Global solicita el envío de producto terminado", fecha: "2026-09-11" }] },
-      ...prev,
-    ]);
-  }
-
-  function actualizarOrdenEnvio(id, cambios) {
-    setOrdenesEnvio((prev) => prev.map((o) => (o.id === id ? { ...o, ...cambios } : o)));
-  }
-
-  function labConfirmaSolicitud(orden) {
-    actualizarOrdenEnvio(orden.id, {
-      estado: "confirmado", confirmLab: true,
-      historial: [...orden.historial, { evento: "ONANO Lab confirma la solicitud y prepara el envío", fecha: "2026-09-11" }],
-    });
-  }
-
-  function labEnviaSolicitud(orden, cantidadSolicitada) {
-    const yaEnviado = orden.envios.reduce((s, e) => s + e.cantidad, 0);
-    const disponible = orden.cantidad - yaEnviado;
-    const cantidad = Math.min(Math.max(0, Math.round(cantidadSolicitada)), disponible);
-    if (cantidad <= 0) return;
-
-    const esCompleto = cantidad === disponible;
-    const nuevoEnvio = { id: "EN-" + Date.now(), cantidad, fecha: "2026-09-11", recibido: false, fechaRecepcion: null };
-
-    setInventarioPT((prev) => ({ ...prev, [orden.productoId]: Math.max(0, (prev[orden.productoId] || 0) - cantidad) }));
-    actualizarOrdenEnvio(orden.id, {
-      estado: "enviando",
-      envios: [...orden.envios, nuevoEnvio],
-      historial: [...orden.historial, {
-        evento: `ONANO Lab envía ${fmt(cantidad)} unidades (envío ${esCompleto ? "completo" : "parcial"})`,
-        fecha: "2026-09-11",
-      }],
-    });
-  }
-
-  function globalConfirmaRecepcionSolicitud(orden, envioId) {
-    const envios = orden.envios.map((e) => (e.id === envioId ? { ...e, recibido: true, fechaRecepcion: "2026-09-11" } : e));
-    const totalEnviado = envios.reduce((s, e) => s + e.cantidad, 0);
-    const totalRecibido = envios.filter((e) => e.recibido).reduce((s, e) => s + e.cantidad, 0);
-    const completado = totalEnviado === orden.cantidad && totalRecibido === orden.cantidad;
-    const envio = envios.find((e) => e.id === envioId);
-
-    actualizarOrdenEnvio(orden.id, {
-      envios,
-      estado: completado ? "completado" : "enviando",
-      historial: [...orden.historial, {
-        evento: `ONANO Global confirma recepción de ${fmt(envio.cantidad)} unidades${completado ? " — envío completo" : ""}`,
-        fecha: "2026-09-11",
-      }],
-    });
-  }
-
-  function eliminarOrdenEnvio(id) {
-    if (!window.confirm("¿Eliminar esta solicitud de envío? Esta acción no se puede deshacer.")) return;
-    setOrdenesEnvio((prev) => prev.filter((o) => o.id !== id));
-  }
-
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 flex">
-      <Sidebar tab={tab} setTab={setTab} sesion={sesion} onCerrarSesion={() => setSesion(null)} />
+      <Sidebar tab={tab} setTab={setTab} sesion={usuario} onCerrarSesion={cerrarSesion} />
       <main className="flex-1 p-8 max-w-6xl">
+        {errorCarga && (
+          <div className="mb-4 text-xs bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 flex items-center justify-between">
+            <span>{errorCarga}</span>
+            <button onClick={() => setErrorCarga("")} className="text-red-400 hover:text-red-700"><Icon name="x" size={13} /></button>
+          </div>
+        )}
+        {cargando && <p className="text-xs text-stone-400 mb-3">Cargando…</p>}
+
         {tab === "dashboard" && (
           <Dashboard materias={materias} productos={productos} ordenes={ordenes}
             stockBajo={stockBajo} porCaducar={porCaducar} setTab={setTab} />
@@ -412,12 +353,7 @@ function App() {
           <MateriasPrimas materias={materias} onNueva={() => setModalMateria(true)} onEliminar={eliminarMateria} />
         )}
         {tab === "productos" && (
-          <Productos
-            productos={productos}
-            materias={materias}
-            onNuevo={() => setModalProducto(true)}
-            onEliminar={eliminarProducto}
-          />
+          <Productos productos={productos} materias={materias} onNuevo={() => setModalProducto(true)} onEliminar={eliminarProducto} />
         )}
         {tab === "inventario_pt" && <InventarioTerminado productos={productos} inventarioPT={inventarioPT} />}
         {tab === "ordenes" && (
@@ -455,6 +391,7 @@ function App() {
   );
 }
 
+/* ---------- Sidebar ---------- */
 function Sidebar({ tab, setTab, sesion, onCerrarSesion }) {
   const items = [
     { id: "dashboard", label: "Panel", icon: "dashboard" },
@@ -494,13 +431,14 @@ function Sidebar({ tab, setTab, sesion, onCerrarSesion }) {
   );
 }
 
+/* ---------- Dashboard ---------- */
 function Dashboard({ materias, productos, ordenes, stockBajo, porCaducar, setTab }) {
-  const pendientes = ordenes.filter((o) => o.estado !== "recibido").length;
+  const pendientes = ordenes.filter((o) => o.estado !== "completado").length;
   return (
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-medium tracking-tight">Panel general</h1>
-        <p className="text-stone-500 text-sm mt-1">Prototipo — datos de ejemplo</p>
+        <p className="text-stone-500 text-sm mt-1">Datos en vivo del servidor</p>
       </header>
       <div className="grid grid-cols-4 gap-4">
         <Metric label="Materias primas" value={materias.length} icon="beaker" />
@@ -548,12 +486,13 @@ function Dashboard({ materias, productos, ordenes, stockBajo, porCaducar, setTab
             const producto = productos.find((p) => p.id === o.productoId);
             return (
               <div key={o.id} className="flex items-center justify-between text-sm py-1.5 border-b border-stone-100 last:border-0">
-                <span className="font-medium">{o.id}</span>
+                <span className="font-medium">{o.folio}</span>
                 <span className="text-stone-500">{producto?.nombre} · {fmt(o.cantidad)} u.</span>
                 <EstadoBadge estado={o.estado} />
               </div>
             );
           })}
+          {ordenes.length === 0 && <p className="text-sm text-stone-400">Todavía no hay órdenes.</p>}
         </div>
       </div>
     </div>
@@ -572,6 +511,7 @@ function Metric({ label, value, icon, tone }) {
   );
 }
 
+/* ---------- Materias primas ---------- */
 function MateriasPrimas({ materias, onNueva, onEliminar }) {
   const [filtro, setFiltro] = useState("todos");
   const filtradas = materias.filter((m) => filtro === "todos" || m.tipo === filtro);
@@ -690,6 +630,7 @@ function ModalMateria({ onClose, onSave }) {
   );
 }
 
+/* ---------- Productos y recetas ---------- */
 function Productos({ productos, materias, onNuevo, onEliminar }) {
   return (
     <div className="space-y-5">
@@ -766,7 +707,7 @@ function ModalProducto({ materias, onClose, onSave }) {
         <div className="space-y-2 mb-2">
           {lineas.map((r, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <select value={r.materiaId} onChange={(e) => actualizarLinea(seccion, i, "materiaId", e.target.value)} className={inputCls}>
+              <select value={r.materiaId} onChange={(e) => actualizarLinea(seccion, i, "materiaId", Number(e.target.value))} className={inputCls}>
                 {opciones.map((m) => (
                   <option key={m.id} value={m.id}>{m.nombre}</option>
                 ))}
@@ -825,6 +766,7 @@ function ModalProducto({ materias, onClose, onSave }) {
   );
 }
 
+/* ---------- Inventario de producto terminado ---------- */
 function InventarioTerminado({ productos, inventarioPT }) {
   return (
     <div className="space-y-5">
@@ -858,6 +800,7 @@ function InventarioTerminado({ productos, inventarioPT }) {
   );
 }
 
+/* ---------- Órdenes de producción ---------- */
 function Ordenes({ ordenes, productos, rol, onNueva, onLabProduce, onGlobalConfirma, onLabEnvia, onGlobalRecibeEnvio, onEliminar }) {
   return (
     <div className="space-y-5">
@@ -878,6 +821,7 @@ function Ordenes({ ordenes, productos, rol, onNueva, onLabProduce, onGlobalConfi
             onLabProduce={onLabProduce} onGlobalConfirma={onGlobalConfirma}
             onLabEnvia={onLabEnvia} onGlobalRecibeEnvio={onGlobalRecibeEnvio} onEliminar={onEliminar} />
         ))}
+        {ordenes.length === 0 && <p className="text-sm text-stone-400">Aún no hay órdenes de producción.</p>}
       </div>
     </div>
   );
@@ -901,7 +845,7 @@ function OrdenCard({ orden, producto, rol, onLabProduce, onGlobalConfirma, onLab
     <div className="bg-white border border-stone-200 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="font-medium">{orden.id} · {producto?.nombre}</p>
+          <p className="font-medium">{orden.folio} · {producto?.nombre}</p>
           <p className="text-xs text-stone-500">{fmt(orden.cantidad)} unidades solicitadas</p>
         </div>
         <EstadoBadge estado={orden.estado} />
@@ -910,10 +854,10 @@ function OrdenCard({ orden, producto, rol, onLabProduce, onGlobalConfirma, onLab
       <div className="flex items-center gap-3 mb-3">
         <PasoConfirmacion label="Lab produce" hecho={orden.confirmLab} />
         <div className="h-px w-6 bg-stone-200" />
-        <PasoConfirmacion label="Global confirma lote" hecho={orden.confirmGlobal && orden.estado !== "solicitado"} />
+        <PasoConfirmacion label="Global confirma lote" hecho={orden.confirmGlobal && orden.estado !== "solicitado" && orden.estado !== "en_lab"} />
       </div>
 
-      {(orden.confirmLab && orden.confirmGlobal) && (
+      {(orden.confirmLab && orden.estado !== "en_lab" && orden.estado !== "producido_pendiente") && (
         <div className="mb-4 bg-stone-50 border border-stone-100 rounded-xl p-3">
           <div className="flex items-center justify-between text-xs text-stone-500 mb-2">
             <span>Enviado: <span className="font-medium text-stone-700">{fmt(enviado)} / {fmt(orden.cantidad)}</span></span>
@@ -995,7 +939,7 @@ function AccionBtn({ children, onClick }) {
 }
 
 function EstadoBadge({ estado }) {
-  const info = ESTADO_INFO[estado];
+  const info = ESTADO_INFO[estado] || { label: estado, clase: "bg-stone-100 text-stone-600" };
   return <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${info.clase}`}>{info.label}</span>;
 }
 
@@ -1006,7 +950,7 @@ function ModalOrden({ productos, onClose, onCrear }) {
   return (
     <Modal onClose={onClose} titulo="Nueva orden de producción">
       <Field label="Producto" full>
-        <select value={productoId} onChange={(e) => setProductoId(e.target.value)} className={inputCls}>
+        <select value={productoId} onChange={(e) => setProductoId(Number(e.target.value))} className={inputCls}>
           {productos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
         </select>
       </Field>
@@ -1022,29 +966,7 @@ function ModalOrden({ productos, onClose, onCrear }) {
   );
 }
 
-function Modal({ children, onClose, titulo }) {
-  return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-medium">{titulo}</h2>
-          <button onClick={onClose}><Icon name="x" size={18} className="text-stone-400" /></button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children, full }) {
-  return (
-    <div className={full ? "col-span-2 mb-3" : "mb-3"}>
-      <label className="text-xs text-stone-500 mb-1 block">{label}</label>
-      {children}
-    </div>
-  );
-}
-
+/* ---------- Órdenes de envío ---------- */
 function OrdenesEnvio({ ordenesEnvio, productos, rol, onNueva, onLabConfirma, onLabEnvia, onGlobalRecibeEnvio, onEliminar }) {
   return (
     <div className="space-y-5">
@@ -1089,7 +1011,7 @@ function OrdenEnvioCard({ orden, producto, rol, onLabConfirma, onLabEnvia, onGlo
     <div className="bg-white border border-stone-200 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="font-medium">{orden.id} · {producto?.nombre}</p>
+          <p className="font-medium">{orden.folio} · {producto?.nombre}</p>
           <p className="text-xs text-stone-500">{fmt(orden.cantidad)} unidades solicitadas por ONANO Global</p>
         </div>
         <EstadoBadge estado={orden.estado} />
@@ -1176,7 +1098,7 @@ function ModalOrdenEnvio({ productos, inventarioPT, onClose, onCrear }) {
   return (
     <Modal onClose={onClose} titulo="Nueva solicitud de envío">
       <Field label="Producto" full>
-        <select value={productoId} onChange={(e) => setProductoId(e.target.value)} className={inputCls}>
+        <select value={productoId} onChange={(e) => setProductoId(Number(e.target.value))} className={inputCls}>
           {productos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
         </select>
       </Field>
@@ -1195,27 +1117,93 @@ function ModalOrdenEnvio({ productos, inventarioPT, onClose, onCrear }) {
   );
 }
 
-function Login({ cuentas, onIngresar, onRegistrar }) {
-  const [modo, setModo] = useState("ingresar");
+/* ---------- Componentes genéricos ---------- */
+function Modal({ children, onClose, titulo }) {
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-medium">{titulo}</h2>
+          <button onClick={onClose}><Icon name="x" size={18} className="text-stone-400" /></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children, full }) {
+  return (
+    <div className={full ? "col-span-2 mb-3" : "mb-3"}>
+      <label className="text-xs text-stone-500 mb-1 block">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+/* ---------- Login (conectado al backend real) ---------- */
+function Login({ apiUrl, setApiUrl, onIngresar, onRegistrar, onOlvide, onRestablecer }) {
+  const params = new URLSearchParams(window.location.search);
+  const tieneTokenURL = params.get("token") && params.get("email");
+
+  const [modo, setModo] = useState(tieneTokenURL ? "restablecer" : "ingresar");
   const [empresa, setEmpresa] = useState("lab");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(params.get("email") || "");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
+  const [tokenReset, setTokenReset] = useState(params.get("token") || "");
   const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [enlaceDev, setEnlaceDev] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  const [mostrarConfig, setMostrarConfig] = useState(false);
   const inputCls = "w-full text-sm border border-stone-200 rounded-lg px-3 py-2 bg-white";
-  const cuentasDemo = cuentas.filter((c) => c.demo);
 
-  function submit() {
-    setError("");
+  async function submit() {
+    setError(""); setMensaje("");
     if (modo === "ingresar") {
-      const r = onIngresar({ email, password });
+      setEnviando(true);
+      const r = await onIngresar({ email, password });
+      setEnviando(false);
       if (!r.ok) setError(r.error);
-    } else {
+    } else if (modo === "crear") {
       if (!email || !password) { setError("Completa correo y contraseña."); return; }
+      if (password.length < 8) { setError("La contraseña debe tener al menos 8 caracteres."); return; }
       if (password !== password2) { setError("Las contraseñas no coinciden."); return; }
-      const r = onRegistrar({ email, password, empresa });
+      setEnviando(true);
+      const r = await onRegistrar({ email, password, empresa });
+      setEnviando(false);
       if (!r.ok) setError(r.error);
+    } else if (modo === "olvide") {
+      if (!email) { setError("Escribe tu correo."); return; }
+      setEnviando(true);
+      const r = await onOlvide(email);
+      setEnviando(false);
+      if (!r.ok) { setError(r.error); return; }
+      setMensaje(r.mensaje);
+      if (r.dev_enlace) setEnlaceDev(r.dev_enlace);
+    } else if (modo === "restablecer") {
+      if (!tokenReset || !password) { setError("Completa el código y la nueva contraseña."); return; }
+      if (password.length < 8) { setError("La contraseña debe tener al menos 8 caracteres."); return; }
+      if (password !== password2) { setError("Las contraseñas no coinciden."); return; }
+      setEnviando(true);
+      const r = await onRestablecer({ email, token: tokenReset, password });
+      setEnviando(false);
+      if (!r.ok) { setError(r.error); return; }
+      setMensaje(r.mensaje + " Ya puedes iniciar sesión.");
+      setModo("ingresar");
+      setPassword(""); setPassword2(""); setTokenReset("");
     }
+  }
+
+  function usarEnlaceDev() {
+    try {
+      const u = new URL(enlaceDev);
+      setTokenReset(u.searchParams.get("token") || "");
+      setEmail(u.searchParams.get("email") || email);
+      setModo("restablecer");
+      setMensaje(""); setEnlaceDev(null);
+    } catch (e) {}
   }
 
   return (
@@ -1224,16 +1212,18 @@ function Login({ cuentas, onIngresar, onRegistrar }) {
         <p className="text-sm font-medium mb-1">ONANO · Inventario</p>
         <p className="text-xs text-stone-500 mb-5">Acceso exclusivo para ONANO Lab y ONANO Global</p>
 
-        <div className="flex gap-1 mb-5 bg-stone-100 rounded-lg p-1">
-          <button onClick={() => { setModo("ingresar"); setError(""); }}
-            className={`flex-1 text-xs py-1.5 rounded-md ${modo === "ingresar" ? "bg-white shadow-sm font-medium" : "text-stone-500"}`}>
-            Iniciar sesión
-          </button>
-          <button onClick={() => { setModo("crear"); setError(""); }}
-            className={`flex-1 text-xs py-1.5 rounded-md ${modo === "crear" ? "bg-white shadow-sm font-medium" : "text-stone-500"}`}>
-            Crear cuenta
-          </button>
-        </div>
+        {modo !== "restablecer" && (
+          <div className="flex gap-1 mb-5 bg-stone-100 rounded-lg p-1">
+            <button onClick={() => { setModo("ingresar"); setError(""); setMensaje(""); }}
+              className={`flex-1 text-xs py-1.5 rounded-md ${modo === "ingresar" ? "bg-white shadow-sm font-medium" : "text-stone-500"}`}>
+              Iniciar sesión
+            </button>
+            <button onClick={() => { setModo("crear"); setError(""); setMensaje(""); }}
+              className={`flex-1 text-xs py-1.5 rounded-md ${modo === "crear" ? "bg-white shadow-sm font-medium" : "text-stone-500"}`}>
+              Crear cuenta
+            </button>
+          </div>
+        )}
 
         {modo === "crear" && (
           <Field label="Empresa" full>
@@ -1243,36 +1233,88 @@ function Login({ cuentas, onIngresar, onRegistrar }) {
             </select>
           </Field>
         )}
-        <Field label="Correo" full>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="tucorreo@onano.com" />
-        </Field>
-        <Field label="Contraseña" full>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
-        </Field>
-        {modo === "crear" && (
-          <Field label="Confirmar contraseña" full>
-            <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} className={inputCls} />
-          </Field>
+
+        {modo !== "restablecer" && (
+          <>
+            <Field label="Correo" full>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="tucorreo@onano.com" />
+            </Field>
+            {modo !== "olvide" && (
+              <Field label="Contraseña" full>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
+              </Field>
+            )}
+            {modo === "crear" && (
+              <Field label="Confirmar contraseña" full>
+                <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} className={inputCls} />
+              </Field>
+            )}
+          </>
+        )}
+
+        {modo === "restablecer" && (
+          <>
+            <Field label="Correo" full>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Código del enlace" full>
+              <input value={tokenReset} onChange={(e) => setTokenReset(e.target.value)} className={inputCls} placeholder="Pega aquí el código que recibiste" />
+            </Field>
+            <Field label="Nueva contraseña" full>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Confirmar nueva contraseña" full>
+              <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} className={inputCls} />
+            </Field>
+          </>
         )}
 
         {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
+        {mensaje && <p className="text-xs text-green-700 mb-3">{mensaje}</p>}
 
-        <button onClick={submit} className="w-full text-sm px-3.5 py-2 rounded-lg bg-stone-900 text-white mt-1">
-          {modo === "ingresar" ? "Entrar" : "Crear cuenta y entrar"}
+        {modo === "olvide" && enlaceDev && (
+          <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+            <p className="text-amber-800 mb-2">No hay un correo real configurado todavía (modo desarrollo). Usa este enlace para probar el flujo:</p>
+            <button onClick={usarEnlaceDev} className="text-xs px-2.5 py-1.5 rounded-lg bg-stone-900 text-white">Usar este enlace ahora</button>
+          </div>
+        )}
+
+        <button onClick={submit} disabled={enviando}
+          className="w-full text-sm px-3.5 py-2 rounded-lg bg-stone-900 text-white mt-1 disabled:opacity-50">
+          {enviando ? "Un momento…" :
+            modo === "ingresar" ? "Entrar" :
+            modo === "crear" ? "Crear cuenta y entrar" :
+            modo === "olvide" ? "Enviar enlace de recuperación" :
+            "Restablecer contraseña"}
         </button>
 
-        {cuentasDemo.length > 0 ? (
-          <p className="text-xs text-stone-400 mt-4 leading-relaxed">
-            Cuentas de prueba activas:<br />
-            {cuentasDemo.map((c) => (
-              <span key={c.email}>{c.email} / {c.password}<br /></span>
-            ))}
-          </p>
-        ) : (
-          <p className="text-xs text-stone-400 mt-4 leading-relaxed">
-            Ya no hay cuentas de prueba activas — usa las cuentas reales que se crearon.
-          </p>
-        )}
+        <div className="flex items-center justify-between mt-3">
+          {modo === "ingresar" && (
+            <button onClick={() => { setModo("olvide"); setError(""); setMensaje(""); }} className="text-xs text-stone-500 hover:text-stone-900">
+              ¿Olvidaste tu contraseña?
+            </button>
+          )}
+          {(modo === "olvide" || modo === "restablecer") && (
+            <button onClick={() => { setModo("ingresar"); setError(""); setMensaje(""); }} className="text-xs text-stone-500 hover:text-stone-900">
+              Volver a iniciar sesión
+            </button>
+          )}
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-stone-100">
+          <button onClick={() => setMostrarConfig((v) => !v)} className="text-xs text-stone-400 hover:text-stone-600">
+            {mostrarConfig ? "Ocultar" : "Configurar"} dirección del servidor
+          </button>
+          {mostrarConfig && (
+            <input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} className={inputCls + " mt-2"} placeholder="http://localhost:4000/api" />
+          )}
+        </div>
+
+        <p className="text-xs text-stone-400 mt-4 leading-relaxed">
+          Cuentas de prueba (creadas por <code>npm run seed</code>):<br />
+          lab@onano.com / onanolab2026<br />
+          global@onano.com / onanoglobal2026
+        </p>
       </div>
     </div>
   );
